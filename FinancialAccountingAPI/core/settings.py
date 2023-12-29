@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-d1(-!%-zxgth7_ev6m4(w!+wrfjsikcm1mro2t&$p#5g*$!ma*"
+SECRET_KEY = "django-insecure-1ggg*81fm3d=8#0sp2gq&(39a)9(jsd*&q*o*^ewn8+li3el12"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -49,13 +49,12 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "FinancialAccountingAPI.urls"
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / 'templates']
-        ,
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -68,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "FinancialAccountingAPI.wsgi.application"
+WSGI_APPLICATION = "core.wsgi.application"
 
 
 # Database
