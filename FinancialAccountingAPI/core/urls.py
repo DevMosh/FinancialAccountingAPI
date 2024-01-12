@@ -1,8 +1,9 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path, include
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 
 from accounts.views import UsersAPIList, UserAPIView
 from accounts.views import UserAPICatigories, UserAPIAddCatigories
@@ -10,7 +11,9 @@ from accounts.views import UserAPIAddExpense, UserAPIAddIncome, UserAPIExpense, 
 
 from categories.views import CategoryAPIList, CategoryAPIView, CategoryAPIDelete, CategoryAPIUpdate
 
-# from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+
+from djoser import views
 
 schema_view = get_schema_view(
        openapi.Info(
@@ -23,7 +26,7 @@ schema_view = get_schema_view(
        ),
        public=True,
        permission_classes=(permissions.AllowAny,),
-   )
+    )
 
 
 urlpatterns = [
@@ -53,10 +56,10 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
 
-
-    # path("api/v1/auth/", include('djoser.urls')),
+    # path('api/v1/auth/user/', views.UserViewSet.as_view({'post': 'activation'})),
+    path("api/v1/auth/", include('djoser.urls')),
     # re_path(r'^auth/', include('djoser.urls.authtoken')),
-    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    # path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]

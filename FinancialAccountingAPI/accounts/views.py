@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -66,6 +67,8 @@ class UserAPIAddCatigories(APIView):
 
         serializer = CategoriesSerializer(user_profile.categories.values('name'), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    permission_classes = (IsAuthenticatedOrReadOnly, )
 
 
 class UserAPIExpense(RetrieveAPIView):
