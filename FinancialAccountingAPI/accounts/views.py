@@ -42,6 +42,7 @@ class UserAPIView(RetrieveAPIView):
 
 
 class UserAPIAddCatigories(APIView):
+    permission_classes = [IsAuthenticated, ]
     """ add a category to the user,
             if it does not exist,
             create a new category """
