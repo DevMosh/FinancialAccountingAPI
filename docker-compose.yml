@@ -1,0 +1,17 @@
+services:
+  web-app:
+    build: .
+    tty: true
+    ports:
+      - '8001:8000'
+    volumes:
+      - ./FinancialAccountingAPI:/service
+      - static_vol:/service/static
+      - media_vol:/service/media
+    command: >
+      sh -c "python manage.py collectstatic --noinput && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      
+
+volumes:
+  static_vol:
+  media_vol:

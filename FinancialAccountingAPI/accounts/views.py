@@ -2,10 +2,11 @@ from datetime import timedelta, datetime
 from decimal import Decimal
 
 from django.db.models import Sum
+from django.http import Http404
 from django.utils import timezone
 
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +15,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from .models import User, UserExpense, UserIncome
-from .serializers import UsersSerializer, UsersSerializerFinance
+from .serializers import UsersSerializer, UsersSerializerFinance, UserExpenseSerializer, UserIncomeSerializer
 
 from categories.models import Category, CategoryUser
 from categories.serializers import CategoriesSerializer
@@ -36,9 +37,15 @@ class UserAPICatigories(APIView):
 
 
 class UserAPIView(RetrieveAPIView):
-    queryset = User.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = UsersSerializer
-    lookup_field = 'pk'
+
+    def get_object(self):
+        return self.request.user
+        # if self.request.user.balance < 0:
+        #     return self.request.user
+        # else:
+        #     raise Http404()
 
 
 class UserAPIAddCatigories(APIView):
@@ -69,12 +76,10 @@ class UserAPIAddCatigories(APIView):
         serializer = CategoriesSerializer(user_profile.categories.values('name'), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    permission_classes = (IsAuthenticatedOrReadOnly, )
-
 
 class UserAPIExpense(RetrieveAPIView):
     queryset = UserExpense.objects.all()
-    serializer_class = UsersSerializer
+    serializer_class = UserExpenseSerializer
     lookup_field = 'pk'
 
 
@@ -108,63 +113,30 @@ class UserAPIAmountOfExpense(APIView):
         }, status=status.HTTP_200_OK)
 
 
-class UserAPIAddExpense(APIView):
-    """ add expense """
+class UserExpenseListView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = UserExpenseSerializer
+    queryset = UserExpense.objects.all()
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
-                'amount': openapi.Schema(type=openapi.TYPE_NUMBER),
-                'category_name': openapi.Schema(type=openapi.TYPE_STRING),
-                'description': openapi.Schema(type=openapi.TYPE_STRING),
-            },
-            required=['user_id', 'amount', 'description']
-        ),
-        responses={200: UsersSerializerFinance()},
-    )
-    def put(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
 
-        user_id = request.data.get('user_id')
-        amount = request.data.get('amount')
-        category_name = request.data.get('category_name')
-        description = request.data.get('description')
+        m = UserExpense.objects.all()
+        serializer2 = UserExpenseSerializer(instance=m, many=True)
 
-        try:
-            user = User.objects.get(pk=user_id)
-
-            if user.balance < Decimal(amount):
-                return Response({"error": "Insufficient funds"}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                user.balance -= Decimal(amount)
-                user.save()
-
-            try:
-                category = Category.objects.get(name=category_name)
-            except Category.DoesNotExist:
-                return Response({"error": f"Category with name '{category_name}' not found"},
-                                status=status.HTTP_404_NOT_FOUND)
-
-            expense = UserExpense.objects.create(
-                user=user,
-                amount=amount,
-                category=category,
-                description=description
-            )
-
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = UsersSerializerFinance(user)
-        serialized_data = serializer.data
-        return Response(serialized_data, status=status.HTTP_200_OK)
+        return Response(serializer2.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class UserAPIIncome(RetrieveAPIView):
-    queryset = UserIncome.objects.all()
-    serializer_class = UsersSerializer
-    lookup_field = 'pk'
+class UserAPIIncome(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserIncomeSerializer
+
+    def get_queryset(self):
+        print(self.request.__dict__)
+        return UserIncome.objects.filter(user=self.request.user)
 
 
 class UserAPIAmountOfIncome(APIView):
@@ -197,41 +169,13 @@ class UserAPIAmountOfIncome(APIView):
         }, status=status.HTTP_200_OK)
 
 
-class UserAPIAddIncome(APIView):
-    """ Add Incomes """
+class UserIncomeListView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = UserIncomeSerializer
+    queryset = UserIncome.objects.all()
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'user_id': openapi.Schema(type=openapi.TYPE_INTEGER),
-                'amount': openapi.Schema(type=openapi.TYPE_NUMBER),
-                'description': openapi.Schema(type=openapi.TYPE_STRING),
-            },
-            required=['user_id', 'amount', 'description']
-        ),
-        responses={200: UsersSerializerFinance()},
-    )
-    def put(self, request, *args, **kwargs):
-        user_id = request.data.get('user_id')
-        amount = request.data.get('amount')
-        description = request.data.get('description')
 
-        try:
-            user = User.objects.get(pk=user_id)
 
-            user.balance += Decimal(amount)
-            user.save()
 
-            expense = UserIncome.objects.create(
-                user=user,
-                amount=amount,
-                description=description
-            )
 
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = UsersSerializerFinance(user)
-        serialized_data = serializer.data
-        return Response(serialized_data, status=status.HTTP_200_OK)

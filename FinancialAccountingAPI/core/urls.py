@@ -4,10 +4,11 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.routers import SimpleRouter
 
-from accounts.views import UsersAPIList, UserAPIView
+from accounts.views import UsersAPIList, UserAPIView, UserIncomeListView, UserExpenseListView
 from accounts.views import UserAPICatigories, UserAPIAddCatigories
-from accounts.views import UserAPIAddExpense, UserAPIAddIncome, UserAPIExpense, UserAPIIncome, UserAPIAmountOfExpense, UserAPIAmountOfIncome
+from accounts.views import UserAPIExpense, UserAPIIncome, UserAPIAmountOfExpense, UserAPIAmountOfIncome
 
 from categories.views import CategoryAPIList, CategoryAPIView, CategoryAPIDelete, CategoryAPIUpdate
 
@@ -33,25 +34,26 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # юзеры
-    path("api/v1/users/", UsersAPIList.as_view(), name="users-list"),
-    path("api/v1/user/<int:pk>", UserAPIView.as_view(), name="user-view"),
+    path("api/v1/users/", UsersAPIList.as_view(), name="users-list"),  # get - получить инфоормацию о всех пользователях
+    path("api/v1/user", UserAPIView.as_view(), name="user-view"),  # get - получить информацию о пользователе
 
-    path("api/v1/user/<int:pk>/categories", UserAPICatigories.as_view(), name="user-categories-list"),
-    path("api/v1/user/add_categories", UserAPIAddCatigories.as_view(), name="user-add-categories-list"),
+    path("api/v1/user/<int:pk>/categories", UserAPICatigories.as_view(), name="user-categories-list"),  # get
+    path("api/v1/user/add_categories", UserAPIAddCatigories.as_view(), name="user-add-categories-list"),  # post
 
-    path("api/v1/user/<int:pk>/expense", UserAPIExpense.as_view(), name="user-expense-list"),
-    path("api/v1/user/<int:pk>/amount_of_expense/<int:days>", UserAPIAmountOfExpense.as_view(), name="user-amout-of-expense"),
-    path("api/v1/user/add_expense", UserAPIAddExpense.as_view(), name="user-add-expense"),
+    path("api/v1/user/<int:pk>/expense", UserAPIExpense.as_view(), name="user-expense-list"),  # get
+    path("api/v1/user/<int:pk>/amount_of_expense/<int:days>", UserAPIAmountOfExpense.as_view(), name="user-amout-of-expense"),  # get
+    path("api/v1/user/expenses/", UserExpenseListView.as_view(), name="user-add-expense"),  # post
 
-    path("api/v1/user/<int:pk>/income", UserAPIIncome.as_view(), name="user-income-list"),
-    path("api/v1/user/<int:pk>/amount_of_income/<int:days>", UserAPIAmountOfIncome.as_view(), name="user-amout-of-income"),
-    path("api/v1/user/add_income", UserAPIAddIncome.as_view(), name="user-add-income"),
+    path("api/v1/user/<int:pk>/income", UserAPIIncome.as_view(), name="user-income-list"),  # get
+    path("api/v1/user/<int:pk>/amount_of_income/<int:days>", UserAPIAmountOfIncome.as_view(), name="user-amout-of-income"),  # get
+    # path("api/v1/user/add_income", UserAPIAddIncome.as_view(), name="user-add-income"),  # put
+    path("api/v1/user/incomes/", UserIncomeListView.as_view(), name="user-add-income"),  # post
 
     # категории
-    path("api/v1/category/", CategoryAPIList.as_view(), name="categories-list"),
-    path("api/v1/category/<int:pk>", CategoryAPIView.as_view(), name="category-view"),
-    path("api/v1/category/delete/<int:pk>", CategoryAPIDelete.as_view(), name="category-delete"),
-    path("api/v1/category/update/<int:pk>", CategoryAPIUpdate.as_view(), name="category-update"),
+    path("api/v1/category/", CategoryAPIList.as_view(), name="categories-list"),  # get
+    path("api/v1/category/<int:pk>", CategoryAPIView.as_view(), name="category-view"),  # get
+    path("api/v1/category/delete/<int:pk>", CategoryAPIDelete.as_view(), name="category-delete"),  # delete
+    path("api/v1/category/update/<int:pk>", CategoryAPIUpdate.as_view(), name="category-update"),  # put
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
@@ -63,3 +65,9 @@ urlpatterns = [
     path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 ]
+
+
+# можно еще регистрировать urls через SimpleRouter()
+
+# router = SimpleRouter()
+# router.register('users', UsersAPIList.as_view())
