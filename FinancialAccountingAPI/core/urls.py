@@ -1,20 +1,11 @@
 from django.contrib import admin
-from django.urls import path, re_path, include
+from django.urls import path, include
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from rest_framework.routers import SimpleRouter
 
-from accounts.views import UsersAPIList, UserAPIView, UserIncomeListView, UserExpenseListView
-from accounts.views import UserAPICatigories, UserAPIAddCatigories
-from accounts.views import UserAPIExpense, UserAPIIncome, UserAPIAmountOfExpense, UserAPIAmountOfIncome
+from rest_framework_simplejwt import views
 
-from categories.views import CategoryAPIList, CategoryAPIView, CategoryAPIDelete, CategoryAPIUpdate
-
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
-
-from djoser import views
 
 schema_view = get_schema_view(
        openapi.Info(
@@ -31,41 +22,18 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
+    path("api/v1/auth/", include('djoser.urls')),
+    path('api/v1/token/', views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', views.TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/token/verify/', views.TokenVerifyView.as_view(), name='token_verify'),
+
     path("admin/", admin.site.urls),
-
-    # юзеры
-    path("api/v1/users/", UsersAPIList.as_view(), name="users-list"),  # get - получить инфоормацию о всех пользователях
-    path("api/v1/user", UserAPIView.as_view(), name="user-view"),  # get - получить информацию о пользователе
-
-    path("api/v1/user/<int:pk>/categories", UserAPICatigories.as_view(), name="user-categories-list"),  # get
-    path("api/v1/user/add_categories", UserAPIAddCatigories.as_view(), name="user-add-categories-list"),  # post
-
-    path("api/v1/user/<int:pk>/expense", UserAPIExpense.as_view(), name="user-expense-list"),  # get
-    path("api/v1/user/<int:pk>/amount_of_expense/<int:days>", UserAPIAmountOfExpense.as_view(), name="user-amout-of-expense"),  # get
-    path("api/v1/user/expenses/", UserExpenseListView.as_view(), name="user-add-expense"),  # post
-
-    path("api/v1/user/<int:pk>/income", UserAPIIncome.as_view(), name="user-income-list"),  # get
-    path("api/v1/user/<int:pk>/amount_of_income/<int:days>", UserAPIAmountOfIncome.as_view(), name="user-amout-of-income"),  # get
-    # path("api/v1/user/add_income", UserAPIAddIncome.as_view(), name="user-add-income"),  # put
-    path("api/v1/user/incomes/", UserIncomeListView.as_view(), name="user-add-income"),  # post
-
-    # категории
-    path("api/v1/category/", CategoryAPIList.as_view(), name="categories-list"),  # get
-    path("api/v1/category/<int:pk>", CategoryAPIView.as_view(), name="category-view"),  # get
-    path("api/v1/category/delete/<int:pk>", CategoryAPIDelete.as_view(), name="category-delete"),  # delete
-    path("api/v1/category/update/<int:pk>", CategoryAPIUpdate.as_view(), name="category-update"),  # put
-
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
 
-    # path('api/v1/auth/user/', views.UserViewSet.as_view({'post': 'activation'})),
-    path("api/v1/auth/", include('djoser.urls')),
-    # re_path(r'^auth/', include('djoser.urls.authtoken')),
-    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('api/v1/', include(('categories.urls', 'categories'), namespace='categories')),
+    path('api/v1/', include(('accounts.urls', 'accounts'), namespace='accounts'))
 ]
-
 
 # можно еще регистрировать urls через SimpleRouter()
 

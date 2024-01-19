@@ -1,35 +1,34 @@
-
 from rest_framework import status
-from rest_framework.test import APITestCase, APIClient
+from rest_framework import test
 from django.urls import reverse
 
 from categories.models import Category
 
 
-class CategoriesApiTests(APITestCase):
+class CategoriesApiTests(test.APITestCase):
     def setUp(self):
-        self.client = APIClient()
+        self.client = test.APIClient()
 
         self.category1 = Category.objects.create(name='Test category 1')
         self.category2 = Category.objects.create(name='Test category 2')
 
     def test_categories_list(self):
-        url = reverse('categories-list')
+        url = reverse('categories:category-api', kwargs={'pk': self.category1.id})
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     def test_category_view(self):
-        url = reverse('category-view', kwargs={'pk': self.category1.pk})
+        url = reverse('categories:category-api', kwargs={'pk': self.category1.pk})
         response = self.client.get(url)
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     def test_category_delete(self):
-        url = reverse('category-delete', kwargs={'pk': self.category1.pk})
+        url = reverse('categories:category-api', kwargs={'pk': self.category1.pk})
         response = self.client.delete(url)
         self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
 
     def test_category_update(self):
-        url = reverse('category-update', kwargs={'pk': self.category1.pk})
+        url = reverse('categories:category-api', kwargs={'pk': self.category1.pk})
         data = {
             'name': 'Test category edit'
         }

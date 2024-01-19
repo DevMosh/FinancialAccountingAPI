@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from django.test import TestCase
 from rest_framework import status
 from rest_framework.reverse import reverse
 
@@ -42,7 +41,7 @@ class UsersApiTests(APITestCase):
     def test_users_list(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'users-list')
+        url = reverse(r'accounts:users-list')
 
         response = self.client.get(url)
 
@@ -50,7 +49,7 @@ class UsersApiTests(APITestCase):
 
     def test_user_view(self):
         self.client.force_authenticate(user=self.user1)
-        url = reverse(r'user-view')
+        url = reverse(r'accounts:user-view')
 
         response = self.client.get(url)
 
@@ -59,7 +58,7 @@ class UsersApiTests(APITestCase):
     def test_user_categories_list(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'user-categories-list', kwargs={'pk': self.user1.pk})
+        url = reverse(r'accounts:user-categories-list')
 
         response = self.client.get(url)
 
@@ -68,29 +67,29 @@ class UsersApiTests(APITestCase):
     def test_user_add_categories_list_auth(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse('user-add-categories-list')
+        url = reverse('accounts:user-categories-list')
         json = {
-            'user_id': self.user1.id,
-            'category_name': 'Category 1'
+            'name': 'Category 1'
         }
-        response = self.client.put(url, data=json)
+        response = self.client.post(url, data=json)
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(201, response.status_code)
 
     def test_user_add_categories_list_no_auth(self):
-        # self.client.force_authenticate(user=None)
+        self.client.force_authenticate(user=None)
 
-        url = reverse('user-add-categories-list')
+        url = reverse('accounts:user-categories-list')
         json = {
             'user_id': self.user1.id,
-            'category_name': 'Category 1'
+            'name': 'Category 1'
         }
-        response = self.client.put(url, data=json)
+        response = self.client.post(url, data=json)
 
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
 
     def test_user_expense_list(self):
-        url = reverse(r'user-expense-list', kwargs={'pk': self.user1.pk})
+        self.client.force_authenticate(user=self.user1)
+        url = reverse(r'accounts:user-add-income')
 
         response = self.client.get(url)
 
@@ -99,7 +98,17 @@ class UsersApiTests(APITestCase):
     def test_user_amout_of_expense(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'user-amout-of-expense', kwargs={'pk': self.user1.pk, 'days': self.days})
+        url = reverse(r'accounts:user-amout-of-expense', kwargs={'pk': self.user1.pk, 'days': self.days})
+
+        response = self.client.get(url)
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertNotEquals({"error": "User not found"}, response.data)
+
+    def test_user_amount_of_income_error_script(self):
+        self.client.force_authenticate(user=self.user1)
+
+        url = reverse(r'accounts:user-amout-of-income', kwargs={'pk': 232, 'days': self.days})
 
         response = self.client.get(url)
 
@@ -108,25 +117,22 @@ class UsersApiTests(APITestCase):
     def test_user_add_expense_no_auth(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'user-add-expense')
+        url = reverse(r'accounts:user-add-expense')
 
         data = {
-            "amount": 1.00,
+            "amount": Decimal(10),
             "category": self.category1.id,
             "description": 'Description 2'
         }
 
-        print(data)
-
         response = self.client.post(url, data=data)
-        print(response.data)
-
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(Decimal(959), self.user1.balance)
 
     def test_user_income_list(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'user-income-list', kwargs={'pk': self.user1.pk})
+        url = reverse(r'accounts:user-add-income')
 
         response = self.client.get(url)
 
@@ -135,42 +141,46 @@ class UsersApiTests(APITestCase):
     def test_user_amount_of_income(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'user-amout-of-income', kwargs={'pk': self.user1.pk, 'days': self.days})
+        url = reverse(r'accounts:user-amout-of-income', kwargs={'pk': self.user1.pk, 'days': self.days})
 
         response = self.client.get(url)
 
         self.assertEqual(status.HTTP_200_OK, response.status_code)
 
+    def test_user_amount_of_income_error_script(self):
+        self.client.force_authenticate(user=self.user1)
+
+        url = reverse(r'accounts:user-amout-of-income', kwargs={'pk': 1212, 'days': self.days})
+
+        response = self.client.get(url)
+
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
     def test_user_add_income_auth(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'user-add-income')
+        url = reverse(r'accounts:user-add-income')
 
         data = {
             "amount": 1.00,
             "description": 'Description 2'
         }
 
-        print(data)
-
         response = self.client.post(url, data=data)
-        print(response.data)
 
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(Decimal(970), self.user1.balance)
 
     def test_user_add_income_no_auth(self):
         self.client.force_authenticate(user=None)
 
-        url = reverse(r'user-add-income')
+        url = reverse(r'accounts:user-add-income')
 
         data = {
-            "amount": 1.00,
+            "amount": 10.00,
             "description": 'Description 2'
         }
 
-        print(data)
-
         response = self.client.post(url, data=data)
-        print(response.data)
 
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)

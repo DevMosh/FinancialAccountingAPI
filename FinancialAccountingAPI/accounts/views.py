@@ -2,12 +2,12 @@ from datetime import timedelta, datetime
 from decimal import Decimal
 
 from django.db.models import Sum
-from django.http import Http404
 from django.utils import timezone
 
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView, RetrieveAPIView, ListCreateAPIView
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -15,10 +15,10 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from .models import User, UserExpense, UserIncome
-from .serializers import UsersSerializer, UsersSerializerFinance, UserExpenseSerializer, UserIncomeSerializer
+from .serializers import UsersSerializer, UserExpenseSerializer, UserIncomeSerializer
 
 from categories.models import Category, CategoryUser
-from categories.serializers import CategoriesSerializer
+from categories.serializers import CategoriesSerializer, CategoriesSerializerUser
 
 
 class UsersAPIList(ListAPIView):
@@ -26,14 +26,19 @@ class UsersAPIList(ListAPIView):
     serializer_class = UsersSerializer
 
 
-class UserAPICatigories(APIView):
+# class UserAPICatigories(RetrieveAPIView, APIView):
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = CategoriesSerializerUser
+#
+#     def get_object(self):
+#         return CategoryUser.objects.get(user=self.request.user)
 
-    def get(self, request, *args, **kwargs):
-        user_id = kwargs.get('pk')
-        user_profile = CategoryUser.objects.get(user_id=user_id)
+class UserAPICatigories(ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CategoriesSerializer
 
-        serializer = CategoriesSerializer(user_profile.categories.values('name'), many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_queryset(self):
+        return Category.objects.filter(categoryuser__user=self.request.user)
 
 
 class UserAPIView(RetrieveAPIView):
@@ -42,10 +47,6 @@ class UserAPIView(RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
-        # if self.request.user.balance < 0:
-        #     return self.request.user
-        # else:
-        #     raise Http404()
 
 
 class UserAPIAddCatigories(APIView):
@@ -93,7 +94,7 @@ class UserAPIAmountOfExpense(APIView):
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            raise ValidationError({"error": "User not found"})
 
         end_date = timezone.now().date()
         start_date = end_date - timedelta(days=int(days)) if days else end_date
@@ -149,7 +150,7 @@ class UserAPIAmountOfIncome(APIView):
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            raise ValidationError({"error": "User not found"})
 
         end_date = timezone.now().date()
         start_date = end_date - timedelta(days=int(days)) if days else end_date
