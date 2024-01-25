@@ -7,9 +7,9 @@ urlpatterns = [
 
     path("user/categories/", views.UserAPICatigories.as_view(), name="user-categories-list"),  # get, post
 
-    path("user/<int:pk>/amount_of_expense/<int:days>/", views.UserAPIAmountOfExpense.as_view(), name="user-amout-of-expense"),  # get
+    path("user/amount_of_expense/", views.UserAPIAmountOfExpense.as_view(), name="user-amout-of-expense"),  # get
     path("user/expenses/", views.UserExpenseListView.as_view(), name="user-add-expense"),  # get, post
 
-    path("user/<int:pk>/amount_of_income/<int:days>/", views.UserAPIAmountOfIncome.as_view(), name="user-amout-of-income"),  # get
+    path("user/amount_of_income/", views.UserAPIAmountOfIncome.as_view(), name="user-amout-of-income"),  # get
     path("user/incomes/", views.UserIncomeListView.as_view(), name="user-add-income"),  # get, post
 ]
