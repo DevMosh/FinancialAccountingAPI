@@ -66,7 +66,7 @@ class UserAPICatigories(CreateAPIView):
         return super(UserAPICatigories, self).post(request)
 
 
-class CategoryUserCreateView(CreateAPIView):
+class CategoryUserCreateView(ListCreateAPIView):
     """ add a category to the user """
 
     permission_classes = [IsAuthenticated, ]

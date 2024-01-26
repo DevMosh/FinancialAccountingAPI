@@ -20,8 +20,7 @@ class UsersApiTests(APITestCase):
         self.category1 = Category.objects.create(name="Category 1")
         self.category2 = Category.objects.create(name="Category 2")
 
-        user_profile = CategoryUser.objects.create(user_id=self.user1.pk)
-        user_profile.categories.add(self.category1.id)
+        user_profile = CategoryUser.objects.create(user_id=self.user1.pk, category_id=self.category1.pk)
 
         self.days = 7
 
@@ -69,7 +68,7 @@ class UsersApiTests(APITestCase):
 
         url = reverse('accounts:user-categories-list')
         json = {
-            'name': 'Category 1'
+            'category': 1
         }
         response = self.client.post(url, data=json)
 
@@ -98,7 +97,7 @@ class UsersApiTests(APITestCase):
     def test_user_amout_of_expense(self):
         self.client.force_authenticate(user=self.user1)
 
-        url = reverse(r'accounts:user-amout-of-expense', kwargs={'pk': self.user1.pk, 'days': self.days})
+        url = reverse(r'accounts:user-amout-of-expense', kwargs={'pk': self.user1.id})
 
         response = self.client.get(url)
 
