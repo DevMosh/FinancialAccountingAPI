@@ -11,7 +11,7 @@ class User(AbstractUser):
     categories = models.ManyToManyField(Category, blank=True)
 
 
-# расходы
+
 class UserExpense(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)

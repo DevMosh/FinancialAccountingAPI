@@ -15,7 +15,7 @@ from .models import User, UserExpense, UserIncome
 from .serializers import UsersSerializer, UserExpenseSerializer, UserIncomeSerializer, UserTotalIncomeSerializer
 
 from categories.models import Category
-from categories.serializers import CategoriesSerializer
+from categories.serializers import CategoriesSerializer, CategoryUserSerializer
 
 
 class UsersAPIList(ListAPIView):
@@ -39,7 +39,7 @@ class UserAPIView(RetrieveAPIView):
         return self.request.user
 
 
-class UserAPICatigories(UpdateAPIView):
+class UserAPICatigories(CreateAPIView):
     permission_classes = [IsAuthenticated, ]
     serializer_class = CategoriesSerializer
 
@@ -58,15 +58,26 @@ class UserAPICatigories(UpdateAPIView):
         ),
         responses={200: UsersSerializer()},
     )
-    def get_queryset(self, *args, **kwargs):
-        category_name = self.request.data.get('category_name')
-        category, created = Category.objects.get_or_create(name=category_name)
-        user_instance = self.request.user
-        user_instance.categories.add(category)
-        user_instance.save()
+    def post(self, request):
+        category = Category.objects.filter(name=request.data['name'])
+        if category.exists():
+            self.request.user.categories.add(category.first().pk)
+        print(self.request.user)
+        return super(UserAPICatigories, self).post(request)
 
-        serializer = CategoriesSerializer(user_instance.categories.all(), many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CategoryUserCreateView(CreateAPIView):
+    """ add a category to the user """
+
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = CategoryUserSerializer
+
+    def get_queryset(self):
+        queryset = Category.objects.filter(user=self.request.user)
+        return queryset
+
+
+
 
 
 class UserAPIExpense(RetrieveAPIView):

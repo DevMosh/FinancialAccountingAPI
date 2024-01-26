@@ -5,6 +5,10 @@ from .models import Category
 from .serializers import CategoriesSerializer
 
 
+class CreateCategoryAPI(generics.CreateAPIView):
+    serializer_class = CategoriesSerializer
+
+
 class CategoryAPI(generics.RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategoriesSerializer
